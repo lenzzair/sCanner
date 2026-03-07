@@ -6,8 +6,14 @@
 #include <string.h>
 
 int main(int argn, char * argv[]){
- 
-  int port_dst = atoi(argv[1]);
+  
+  if (argn != 3){
+    printf("Tools use: scan <ip> <port> \n");
+    return 1;
+  }
+
+  char * ip_dst = argv[1];
+  int port_dst = atoi(argv[2]);
   // CREATION de la socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -22,7 +28,7 @@ int main(int argn, char * argv[]){
 
   server.sin_family = AF_INET;
   server.sin_port = htons(port_dst);
-  server.sin_addr.s_addr = inet_addr("127.0.0.1");
+  server.sin_addr.s_addr = inet_addr(ip_dst);
 
 
   // Connexion au serveur
