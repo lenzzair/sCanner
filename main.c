@@ -5,6 +5,34 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+
+int scan(char *ip, int port){
+
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (sock == -1){
+    perror("socket error");
+    return 1;
+  }
+
+  struct sockaddr_in server;
+
+  server.sin_family = AF_INET;
+  server.sin_port = htons(port);
+  server.sin_addr.s_addr = inet_addr(ip);
+
+
+  if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+    return 1;
+  }
+
+  return 0;
+  
+  close(sock);
+
+}
+
+
 int main(int argn, char * argv[]){
   
   if (argn != 3){
@@ -13,34 +41,41 @@ int main(int argn, char * argv[]){
   }
 
   char * ip_dst = argv[1];
-  int port_dst = atoi(argv[2]);
-  // CREATION de la socket
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  int port_start; int port_end;
 
-  if (sock == -1){
-    perror("socket error");
-    return 1;
+
+  if (strcmp(argv[2], "all") == 0){
+
+    port_start = 1;
+    int port_end = 1204;
+
+  } else {
+    int port_end = atoi(argv[2]);
+    int port_start = port_end;
   }
-
-  // Préparation de l'adresse du serveur
   
-  struct sockaddr_in server;
 
-  server.sin_family = AF_INET;
-  server.sin_port = htons(port_dst);
-  server.sin_addr.s_addr = inet_addr(ip_dst);
+  // CREATION de la socket
+  // Préparation de l'adresse du serveur
 
+  for(int port = port_start; port >= port_end; port++){
+
+    int result = scan(ip_dst, port);
+
+    if (result == 0){
+      printf("Port %d open \n", port);
+    
+    } else if (port_start == port_end){
+
+      printf("Port %d close \n", port);
+
+    }
+
+  }
 
   // Connexion au serveur
   
-  if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-    printf("Port %d close \n", port_dst);
-    return 1;
-  }
-
-  printf("Port %d open \n", port_dst);
-
-  close(sock);
+  
 
   return 0;
 
