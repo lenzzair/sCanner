@@ -12,6 +12,7 @@ int scan(char *ip, int port){
 
   if (sock == -1){
     perror("socket error");
+    close(sock);
     return 1;
   }
 
@@ -23,12 +24,13 @@ int scan(char *ip, int port){
 
 
   if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+    close(sock);
     return 1;
   }
 
+  close(sock);
   return 0;
   
-  close(sock);
 
 }
 
@@ -47,19 +49,19 @@ int main(int argn, char * argv[]){
   if (strcmp(argv[2], "all") == 0){
 
     port_start = 1;
-    int port_end = 1204;
+    port_end = 65535;
 
   } else {
-    int port_end = atoi(argv[2]);
-    int port_start = port_end;
+    port_end = atoi(argv[2]);
+    port_start = port_end;
   }
-  
 
-  // CREATION de la socket
-  // Préparation de l'adresse du serveur
+  printf("[+] Status IP : %s \n", ip_dst);
+  printf("[+] Status port : %d - %d \n", port_start, port_end);
+  printf("[*] Scanning starting... \n");
 
-  for(int port = port_start; port >= port_end; port++){
-
+  for(int port = port_start; port <= port_end; port++){
+    
     int result = scan(ip_dst, port);
 
     if (result == 0){
@@ -72,9 +74,6 @@ int main(int argn, char * argv[]){
     }
 
   }
-
-  // Connexion au serveur
-  
   
 
   return 0;
