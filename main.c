@@ -5,6 +5,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#define BUFFER_SIZE 1024
+
+
 typedef struct 
 {
   int port;
@@ -59,7 +62,7 @@ char *get_service(int port){
   return "unknown";
 }
 
-int scan(char *ip, int port){
+int scan_tcp(char *ip, int port){
   // ==========
   // SCAN : 
   // fonction who start the network scan
@@ -69,7 +72,8 @@ int scan(char *ip, int port){
   // return => int 1, the port is close
   //        => int 0, the port is open
   // ==========
-  
+ 
+
   int sock = socket(AF_INET, SOCK_STREAM, 0);
 
   if (sock == -1){
@@ -103,6 +107,40 @@ int scan(char *ip, int port){
 
 }
 
+int scan_udp(char *ip, int port){
+  
+  char buffer[BUFFER_SIZE];
+  int ret; int len; 
+
+  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+
+  if (sock == -1){
+    perror("socket error");
+    close(sock);
+    return 1;
+  }
+
+  struct sockaddr_in server;
+
+  server.sin_family = AF_INET;
+  server.sin_port = htons(port);
+  server.sin_addr.s_addr = inet_addr(ip);
+
+  if (ret = bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0){
+    perror("bind failed !");
+    close(sock);
+    return 1;
+  }
+
+  if (len = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, sizeof(server)) < 0){
+    perror("receivd failed !");
+    close(sock);
+    return 1;
+  }
+
+  return 0;
+}
 
 int main(int argn, char * argv[]){
   
@@ -110,9 +148,11 @@ int main(int argn, char * argv[]){
   int verbose = 0;
   int port_start; int port_end; int nb_port; int nb_port_open;
   char *ip_dst;
-  int opt;
+  int sock_type = 0;
+  char *str_sock_type = "tcp";
+  int opt; int result;
 
-  while ((opt = getopt(argn, argv, "hvai:p:r:")) != -1){
+  while ((opt = getopt(argn, argv, "hvuai:p:r:")) != -1){
     switch (opt){
       case 'h': 
         help();
@@ -120,6 +160,10 @@ int main(int argn, char * argv[]){
 
       case 'v':
         verbose = 1;
+        break;
+
+      case 'u':
+        sock_type = 1;
         break;
       
       case 'a':
@@ -147,24 +191,34 @@ int main(int argn, char * argv[]){
     }
   }
 
+  if(sock_type){
+    str_sock_type = "udp";
+  }
+
   printf("[+] Status IP : %s \n", ip_dst);
   printf("[+] Status port : %d - %d \n", port_start, port_end);
-  printf("[+] Status Verbose : %d \n", verbose);
+  printf("[+] Status SOCK_STREAM : %s \n", str_sock_type);
   printf("[*] Scanning starting... \n");
   printf("\nPORT \t STATE \t SERVICE\n");
 
   for(int port = port_start; port <= port_end; port++){
     
-    int result = scan(ip_dst, port);
+    if(sock_type){
+      result = scan_udp(ip_dst, port);
+    }else{
+      result = scan_tcp(ip_dst, port);
+    }
+
     char *string_port = get_service(port);
+
     if (result == 0){
 
-      printf("%d \t open \t %s \n", port, string_port);
+      printf("%d-%s \t open \t %s \n", port, str_sock_type, string_port);
       nb_port_open++;
 
     } else if (port_start == port_end){
 
-      printf("%d \t close \t %s \n", port, string_port);
+      printf("%d-%s \t close \t %s \n", port, str_sock_type, string_port);
 
     }
 
