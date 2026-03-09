@@ -5,6 +5,37 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+typedef struct 
+{
+  int port;
+  char * service;
+} PortService;
+
+PortService services[] = {
+
+  {21, "FTP"},
+  {22, "SSH"},
+  {23, "TELNET"},
+  {25, "SMTP"},
+  {53, "DNS"},
+  {80, "HTTP"},
+  {443, "HTTPS"},
+  {3306, "MySQL"},
+  {8080, "HTTP-alt"},
+  {8443, "HTTPS-alt"},
+  {0,   NULL}
+};
+
+
+char *get_service(int port){
+  for (int i = 0; services[i].service != NULL; i++){
+    if(services[i].port == port){
+      return services[i].service;
+    }
+    
+  }
+  return "unknown";
+}
 
 int scan(char *ip, int port){
 
@@ -15,6 +46,13 @@ int scan(char *ip, int port){
     close(sock);
     return 1;
   }
+
+  struct timeval timeout;
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
+  setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+  
+
 
   struct sockaddr_in server;
 
@@ -43,7 +81,7 @@ int main(int argn, char * argv[]){
   }
 
   char * ip_dst = argv[1];
-  int port_start; int port_end;
+  int port_start; int port_end; int nb_port; int nb_port_open;
 
 
   if (strcmp(argv[2], "all") == 0){
@@ -63,17 +101,23 @@ int main(int argn, char * argv[]){
   for(int port = port_start; port <= port_end; port++){
     
     int result = scan(ip_dst, port);
-
+    char *string_port = get_service(port);
     if (result == 0){
-      printf("Port %d open \n", port);
-    
+
+      printf("Port : \t %d \t open \t %s \n", port, string_port);
+      nb_port_open++;
+
     } else if (port_start == port_end){
 
       printf("Port %d close \n", port);
 
     }
 
+    nb_port++;
+
   }
+
+  printf("\n\n---\n %d port scan and %d open", nb_port, nb_port_open );
   
 
   return 0;
