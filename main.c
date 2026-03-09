@@ -27,6 +27,19 @@ PortService services[] = {
 };
 
 
+void help(){
+
+  printf("Usage: scan [-h] [-i] [-p 80]/[-r 21-1024]/[-a] [-v]\n");
+  printf("-h \t Show this help");
+  printf("-i \t Specifie a target IP\n");
+  printf("\nYou can choose only one of this three options:\n\n");
+  printf("-p \t Specifie a single port to scan\n");
+  printf("-r \t Specifie a range of port to scan\n");
+  printf("-a \t Scan all port (1-65535)\n");
+  
+}
+
+
 char *get_service(int port){
   // ==========
   // GET_SERVICE : 
@@ -36,6 +49,7 @@ char *get_service(int port){
   // return => name of the servie (HTTP)
   //        => unknown
   // ==========
+  
   for (int i = 0; services[i].service != NULL; i++){
     if(services[i].port == port){
       return services[i].service;
@@ -55,6 +69,7 @@ int scan(char *ip, int port){
   // return => int 1, the port is close
   //        => int 0, the port is open
   // ==========
+  
   int sock = socket(AF_INET, SOCK_STREAM, 0);
 
   if (sock == -1){
@@ -91,28 +106,52 @@ int scan(char *ip, int port){
 
 int main(int argn, char * argv[]){
   
-  if (argn != 3){
-    printf("Tools use: scan <ip> <port> \n");
-    return 1;
-  }
 
-  char * ip_dst = argv[1];
+  int verbose = 0;
   int port_start; int port_end; int nb_port; int nb_port_open;
+  char *ip_dst;
+  int opt;
 
+  while ((opt = getopt(argn, argv, "hvai:p:r:")) != -1){
+    switch (opt){
+      case 'h': 
+        help();
+        return 0;
 
-  if (strcmp(argv[2], "all") == 0){
+      case 'v':
+        verbose = 1;
+        break;
+      
+      case 'a':
+        port_start = 1;
+        port_end = 65535;
+        break;  
 
-    port_start = 1;
-    port_end = 65535;
+      case 'i':
+        ip_dst = optarg;
+        break;
+      case 'p':
+        port_start = atoi(optarg);
+        port_end = atoi(optarg);
+        break;
 
-  } else {
-    port_end = atoi(argv[2]);
-    port_start = port_end;
+      case 'r':
+        port_start = atoi(strtok(optarg, "-"));
+        port_end = atoi(strtok(NULL, "-"));
+        break;
+
+      case '?':
+        printf("unknown option: %c \n", optarg);
+        help();
+        return 0;
+    }
   }
 
   printf("[+] Status IP : %s \n", ip_dst);
   printf("[+] Status port : %d - %d \n", port_start, port_end);
+  printf("[+] Status Verbose : %d \n", verbose);
   printf("[*] Scanning starting... \n");
+  printf("\nPORT \t STATE \t SERVICE\n");
 
   for(int port = port_start; port <= port_end; port++){
     
@@ -120,12 +159,12 @@ int main(int argn, char * argv[]){
     char *string_port = get_service(port);
     if (result == 0){
 
-      printf("Port : \t %d \t open \t %s \n", port, string_port);
+      printf("%d \t open \t %s \n", port, string_port);
       nb_port_open++;
 
     } else if (port_start == port_end){
 
-      printf("Port %d close \n", port);
+      printf("%d \t close \t %s \n", port, string_port);
 
     }
 
@@ -133,7 +172,7 @@ int main(int argn, char * argv[]){
 
   }
 
-  printf("\n\n---\n %d port scan and %d open", nb_port, nb_port_open );
+  printf("\n\n---\n %d port scan and %d open \n", nb_port, nb_port_open );
   
 
   return 0;
