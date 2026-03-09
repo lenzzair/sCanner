@@ -28,6 +28,14 @@ PortService services[] = {
 
 
 char *get_service(int port){
+  // ==========
+  // GET_SERVICE : 
+  // fonction who permet to get the name of the service use with table above
+  // ~~~~~~~~~~~~~~~~~~
+  // param 1 => int port
+  // return => name of the servie (HTTP)
+  //        => unknown
+  // ==========
   for (int i = 0; services[i].service != NULL; i++){
     if(services[i].port == port){
       return services[i].service;
@@ -38,7 +46,15 @@ char *get_service(int port){
 }
 
 int scan(char *ip, int port){
-
+  // ==========
+  // SCAN : 
+  // fonction who start the network scan
+  // ~~~~~~~~~~~~~~~~~~
+  // param 1 => char ip, the target IP
+  // param 2 => int port, the target dest port 
+  // return => int 1, the port is close
+  //        => int 0, the port is open
+  // ==========
   int sock = socket(AF_INET, SOCK_STREAM, 0);
 
   if (sock == -1){
