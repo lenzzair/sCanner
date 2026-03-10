@@ -110,7 +110,8 @@ int scan_tcp(char *ip, int port){
 int scan_udp(char *ip, int port){
   
   char buffer[BUFFER_SIZE];
-  int ret; int len; 
+  int ret; int len; int length = 0; int flags = 0;
+  char * message = "";
 
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -121,26 +122,36 @@ int scan_udp(char *ip, int port){
     return 1;
   }
 
+  struct timeval timeout;
+  timeout.tv_sec = 2;
+  timeout.tv_usec = 0;
+  setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+  
   struct sockaddr_in server;
 
   server.sin_family = AF_INET;
   server.sin_port = htons(port);
   server.sin_addr.s_addr = inet_addr(ip);
-
   
 
-  //if (ret = bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0){
-  //  perror("bind failed !");
-  //  close(sock);
-  //  return 1;
-  //}
+  if (sendto(sock, message, length, flags, (struct sockaddr*)&server, sizeof(server)) < 0 ){
+    perror("sendto failed !");
+    close(sock);
+    return 1;
+  }
+  
+  
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+  
+  socklen_t server_len = sizeof(server);
 
-  //if (len = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, sizeof(server)) < 0){
-  //  perror("receivd failed !");
-  //  close(sock);
-  //  return 1;
-  //}
-
+  if (len = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, &server_len) < 0){
+    perror("receivd failed !");
+    close(sock);
+    return 1;
+  }
+  
+  close(sock);
   return 0;
 }
 
