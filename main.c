@@ -22,6 +22,7 @@ PortService services[] = {
   {25, "SMTP"},
   {53, "DNS"},
   {80, "HTTP"},
+  {88, "KERBEROS"},
   {443, "HTTPS"},
   {3306, "MySQL"},
   {8080, "HTTP-alt"},
@@ -32,10 +33,9 @@ PortService services[] = {
 
 void help(){
 
-  printf("Usage: scan [-h] [-i] [-p 80]/[-r 21-1024]/[-a] [-v]\n");
-  printf("-h \t Show this help");
+  printf("Usage: scan [-h] [-i] [-p 80]/[-r 21-1024]/[-a] [-v]\n\n");
+  printf("-h \t Show this help \n");
   printf("-i \t Specifie a target IP\n");
-  printf("\nYou can choose only one of this three options:\n\n");
   printf("-p \t Specifie a single port to scan\n");
   printf("-r \t Specifie a range of port to scan\n");
   printf("-a \t Scan all port (1-65535)\n");
@@ -127,17 +127,19 @@ int scan_udp(char *ip, int port){
   server.sin_port = htons(port);
   server.sin_addr.s_addr = inet_addr(ip);
 
-  if (ret = bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0){
-    perror("bind failed !");
-    close(sock);
-    return 1;
-  }
+  
 
-  if (len = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, sizeof(server)) < 0){
-    perror("receivd failed !");
-    close(sock);
-    return 1;
-  }
+  //if (ret = bind(sock, (struct sockaddr*)&server, sizeof(server)) < 0){
+  //  perror("bind failed !");
+  //  close(sock);
+  //  return 1;
+  //}
+
+  //if (len = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, sizeof(server)) < 0){
+  //  perror("receivd failed !");
+  //  close(sock);
+  //  return 1;
+  //}
 
   return 0;
 }
